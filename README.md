@@ -2,13 +2,15 @@
 
 > **Privacy-First AI Chat PWA** - Your conversations, your device, your data.
 
-[![DEEP Open Innovation Hackathon 2025](https://img.shields.io/badge/DEEP-Hackathon%202025-00d4ff?style=for-the-badge)](https://deep.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg?style=for-the-badge)](LICENSE)
-[![WebGPU](https://img.shields.io/badge/WebGPU-Powered-00d4ff?style=for-the-badge)](https://gpuweb.github.io/gpuweb/)
-
 **Edge-Netic** is a cutting-edge Progressive Web App that brings AI directly to your browser. No servers, no cloud, no data leaks - just pure, private AI running locally on your device using WebGPU acceleration.
 
-Built for **DEEP Open Innovation Hackathon 2025** 🚀
+Built in **DEEP Open Innovation Hackathon 2025** 🚀
+
+---
+
+## 🔗 Links
+
+- **Live Demo**: [Coming Soon]
 
 ---
 
@@ -49,27 +51,13 @@ Built for **DEEP Open Innovation Hackathon 2025** 🚀
 
 ---
 
-## 🎯 Hackathon Challenge
-
-**Challenge**: Create an AI-powered application that prioritizes user privacy and runs entirely on-device.
-
-**Our Solution**: Edge-Netic leverages WebGPU to run a full-fledged AI model (Llama 3.2 1B) directly in the browser, eliminating the need for cloud infrastructure and ensuring complete data privacy.
-
-**Innovation**:
-- First-of-its-kind browser-based AI chat with full offline capability
-- Advanced progress tracking with stage indicators
-- Multi-persona AI for diverse use cases
-- Complete conversation management system
-
----
-
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - **Browser**: Chrome/Edge 113+ or Opera 99+ (WebGPU support required)
 - **RAM**: Minimum 2GB available
-- **Storage**: ~500MB for AI model cache
+- **Storage**: ~800MB for AI model cache
 - **GPU**: WebGPU-compatible graphics card
 
 ### Installation
@@ -224,7 +212,7 @@ Beautiful initialization screen with:
 ### Initialization Flow
 
 1. **WebGPU Detection**: Checks browser compatibility
-2. **Model Download**: Downloads Llama 3.2 1B (~500MB) on first visit
+2. **Model Download**: Downloads Llama 3.2 1B (~800MB) on first visit
 3. **Model Caching**: Stores in IndexedDB for instant future loads
 4. **Engine Initialization**: Loads model into WebGPU
 5. **Ready to Chat**: AI fully operational in your browser
@@ -268,7 +256,7 @@ Beautiful initialization screen with:
 
 | Metric | Value |
 |--------|-------|
-| Model Download | ~500MB (one-time) |
+| Model Download | ~800MB (one-time) |
 | First Load Time | 5-15 seconds |
 | Cached Load Time | 2-5 seconds |
 | First Message | 2-5 seconds |
@@ -305,52 +293,6 @@ Beautiful initialization screen with:
 - **Education**: Learn about AI without cloud dependencies
 - **Content Creation**: Brainstorm ideas privately
 - **Code Assistance**: Get programming help offline
-
----
-
-## 🛠️ Customization
-
-### Change AI Model
-
-Edit `app/chat/page.tsx`:
-
-```typescript
-const engine = await webllm.CreateMLCEngine(
-  'Llama-3.2-1B-Instruct-q4f16_1-MLC', // Change model here
-  { initProgressCallback: ... }
-);
-```
-
-Available models: [MLC AI Model Library](https://github.com/mlc-ai/web-llm#model-support)
-
-### Customize Theme
-
-Edit `app/globals.css`:
-
-```css
-:root {
-  --primary: 180 100% 50%;    /* Cyan */
-  --secondary: 280 65% 60%;   /* Purple */
-}
-```
-
-### Add New Persona
-
-Edit `lib/personaPrompts.ts`:
-
-```typescript
-export const PERSONAS: Record<PersonaType, Persona> = {
-  yourPersona: {
-    name: 'Your Persona',
-    prompt: 'Your custom system prompt...',
-    icon: '🎭',
-    description: 'Your description'
-  },
-  // ... other personas
-};
-```
-
----
 
 ## 🐛 Troubleshooting
 
@@ -436,36 +378,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🙏 Acknowledgments
-
-- **[@mlc-ai/web-llm](https://github.com/mlc-ai/web-llm)** - For making browser-based AI possible
-- **[shadcn/ui](https://ui.shadcn.com)** - For beautiful UI components
-- **[Next.js](https://nextjs.org)** - For the amazing React framework
-- **[Tailwind CSS](https://tailwindcss.com)** - For utility-first styling
-- **DEEP Open Innovation Hackathon 2025** - For the inspiration and opportunity
-
----
-
-## 🔗 Links
-
-- **Live Demo**: [Coming Soon]
-- **Documentation**: [GitHub Wiki](https://github.com/yourusername/edge-netic/wiki)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/edge-netic/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/edge-netic/discussions)
-
----
-
 ## 📧 Contact
 
-**Developer**: Your Name  
-**Email**: your.email@example.com  
+**Developer**: Kundan Sahu
+**Email**: espkundan@gmail.com  
 **Hackathon**: DEEP Open Innovation Hackathon 2025
 
 ---
 
 <div align="center">
-
-**Made with ❤️ for DEEP Open Innovation Hackathon 2025**
 
 ⭐ Star this repo if you find it useful!
 
