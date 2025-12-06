@@ -96,9 +96,22 @@ export default function ChatPage() {
 
       const webllm = await import('@mlc-ai/web-llm');
 
+      // Configure custom model URL to use Hugging Face CDN directly
+      // This fixes CDN access issues on Vercel
+      const appConfig = {
+        model_list: [
+          {
+            model_id: 'Llama-3.2-1B-Instruct-q4f16_1-MLC',
+            model: 'https://huggingface.co/mlc-ai/Llama-3.2-1B-Instruct-q4f16_1-MLC/resolve/main/',
+            model_lib: 'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/Llama-3.2-1B-Instruct-q4f16_1-ctx4k_cs1k-webgpu.wasm',
+          }
+        ]
+      };
+
       const engine = await webllm.CreateMLCEngine(
         'Llama-3.2-1B-Instruct-q4f16_1-MLC',
         {
+          appConfig,  // Use custom CDN configuration
           initProgressCallback: (progress) => {
             // Calculate progress percentage
             const percent = Math.round(progress.progress * 100);
