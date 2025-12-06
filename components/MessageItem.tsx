@@ -37,7 +37,7 @@ export function MessageItem({ message, onRegenerate, isStreaming }: MessageItemP
             <div className="flex flex-col gap-2 max-w-[80%] md:max-w-[70%]">
                 <div
                     className={`p-4 rounded-2xl ${isUser
-                        ? 'bg-gradient-to-br from-cyan-600 to-blue-600 text-white'
+                        ? 'bg-cyan-500 text-black font-medium'
                         : 'glass border border-white/10 text-gray-100'
                         }`}
                 >

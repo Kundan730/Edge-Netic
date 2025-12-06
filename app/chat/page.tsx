@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, Trash2, Lock, Loader2, Download, ArrowLeft, Bot, Menu, BarChart3 } from 'lucide-react';
+import { Send, Trash2, Lock, Loader2, Download, ArrowLeft, Bot, Menu, BarChart3, Shield, Pause, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,12 +35,14 @@ export default function ChatPage() {
   const [downloadMB, setDownloadMB] = useState({ current: 0, total: 0 });
   const [currentStage, setCurrentStage] = useState('Initializing');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [selectedPersona, setSelectedPersona] = useState<PersonaType>('standard');
   const [stats, setStats] = useState<Stats>(loadStats());
   const [showAnalytics, setShowAnalytics] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Start closed on mobile
   const modelLoadStartTimeRef = useRef<number>(0);
   const maxProgressRef = useRef<number>(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const engineRef = useRef<any | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -280,6 +282,11 @@ export default function ChatPage() {
 
       // Stream chunks
       for await (const chunk of completion) {
+        // Check if paused
+        if (isPaused) {
+          break;
+        }
+
         const delta = chunk.choices[0]?.delta?.content || '';
         fullResponse += delta;
 
@@ -441,91 +448,101 @@ export default function ChatPage() {
   const currentConv = getCurrentConversation();
 
   return (
-    <div className="min-h-screen flex bg-black">
-      {/* Sidebar */}
-      <ConversationSidebar
-        conversations={conversations}
-        activeConvId={activeConvId}
-        onSelectConversation={(id) => {
-          setActiveConvId(id);
-          const conv = conversations.find(c => c.id === id);
-          if (conv) setSelectedPersona(conv.persona);
-        }}
-        onNewConversation={createNewConversation}
-        onDeleteConversation={deleteConversation}
-        isMobileOpen={isSidebarOpen}
-        onMobileClose={() => setIsSidebarOpen(false)}
-      />
+    <div className="h-screen flex overflow-hidden bg-black">
+      {/* Sidebar - Hidden on mobile by default, always visible on desktop */}
+      <div className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:static z-50 md:z-0 transition-transform duration-300 ease-in-out h-full w-64`}>
+        <ConversationSidebar
+          conversations={conversations}
+          activeConvId={activeConvId}
+          onSelectConversation={(id) => {
+            setActiveConvId(id);
+            const conv = conversations.find(c => c.id === id);
+            if (conv) setSelectedPersona(conv.persona);
+            setIsSidebarOpen(false); // Close on mobile after selection
+          }}
+          onNewConversation={createNewConversation}
+          onDeleteConversation={deleteConversation}
+          isMobileOpen={isSidebarOpen}
+          onMobileClose={() => setIsSidebarOpen(false)}
+        />
+      </div>
+
+      {/* Overlay for mobile sidebar */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        <header className="border-b border-white/10 bg-black/50 backdrop-blur-lg sticky top-0 z-40">
-          <div className="px-4 py-4">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* Header */}
+        <header className="border-b border-cyan-500/20 bg-black/80 backdrop-blur-lg flex-shrink-0">
+          <div className="px-4 md:px-6 py-3 md:py-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setIsSidebarOpen(true)}
-                  className="md:hidden text-gray-400 hover:text-white"
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="text-gray-400 hover:text-cyan-400 hover:bg-cyan-500/10"
                 >
-                  <Menu className="w-5 h-5" />
+                  <Menu className="w-5 h-5 md:w-6 md:h-6" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => router.push('/')}
-                  className="text-gray-400 hover:text-white"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </Button>
-                <h1 className="text-2xl font-bold text-gradient">Edge-Netic</h1>
+                <div className="flex items-center gap-2">
+                  <Shield className="w-5 h-5 md:w-6 md:h-6 text-cyan-400" />
+                  <div>
+                    <h1 className="text-base md:text-xl font-bold text-cyan-400 tracking-wider">EDGE-NETIC</h1>
+                    <p className="text-[10px] text-gray-500 hidden sm:block">PRIVACY FIRST AI</p>
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
                 <PersonaSelector value={selectedPersona} onChange={handlePersonaChange} />
 
-                <div className="px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-green-400" />
-                  <span className="text-xs font-semibold text-green-400 hidden sm:inline">Offline</span>
+                <div className="px-2 md:px-3 py-1 bg-green-500/10 border border-green-500/30 rounded-full flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-400 rounded-full animate-pulse" />
+                  <span className="text-[10px] md:text-xs font-semibold text-green-400 hidden sm:inline">SECURE</span>
                 </div>
 
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowAnalytics(true)}
-                  className="border-white/20 text-gray-300 hover:bg-white/5"
+                  className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 text-xs px-2 py-1"
                 >
-                  <BarChart3 className="w-4 h-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Stats</span>
+                  <BarChart3 className="w-4 h-4" />
                 </Button>
 
-                {currentConv && currentConv.messages.length > 0 && (
-                  <ExportMenu conversation={currentConv} />
+                {getCurrentConversation() && (
+                  <ExportMenu conversation={getCurrentConversation()!} />
                 )}
 
+
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="ghost"
+                  size="icon"
                   onClick={clearCurrentChat}
                   className="border-red-500/20 text-red-400 hover:bg-red-500/10"
                 >
-                  <Trash2 className="w-4 h-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Clear</span>
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-hidden flex flex-col">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Messages Area */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
             {!currentConv || currentConv.messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+              <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
                 <Bot className="w-16 h-16 text-cyan-400 animate-pulse-slow" />
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold text-white">Your Private AI Assistant</h3>
-                  <p className="text-gray-400 max-w-md">
+                  <h3 className="text-xl md:text-2xl font-semibold text-white">Your Private AI Assistant</h3>
+                  <p className="text-gray-400 max-w-md text-sm md:text-base">
                     Start a conversation. Everything runs locally on your device.
                   </p>
                   <p className="text-sm text-cyan-400">
@@ -594,30 +611,47 @@ export default function ChatPage() {
             )}
           </div>
 
-          <div className="border-t border-white/10 bg-black/50 backdrop-blur-lg p-4">
-            <div className="flex gap-3">
-              <VoiceInputButton onTranscript={handleVoiceTranscript} />
+          {/* Input Area - Fixed Height */}
+          <div className="border-t border-cyan-500/20 bg-black/80 backdrop-blur-lg flex-shrink-0">
+            <div className="max-w-4xl mx-auto px-4 py-3">
+              <div className="flex gap-2 items-center">
+                <VoiceInputButton onTranscript={handleVoiceTranscript} />
 
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Type your message... (Shift+Enter for new line)"
-                className="flex-1 min-h-[60px] max-h-[200px] resize-none bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-cyan-400/50 focus:ring-cyan-400/20"
-                disabled={isGenerating}
-              />
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type your message..."
+                  className="flex-1 h-[48px] resize-none bg-gray-950/50 border-cyan-500/20 text-white text-sm placeholder:text-gray-500 focus:border-cyan-400/50 focus:ring-cyan-400/20 rounded-lg px-3 py-3"
+                  disabled={isGenerating}
+                />
 
-              <Button
-                onClick={() => handleSend()}
-                disabled={!input.trim() || isGenerating}
-                className="h-[60px] px-6 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white font-semibold shadow-lg glow-cyan transition-all duration-300"
-              >
-                {isGenerating ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Send className="w-5 h-5" />
+                {isGenerating && (
+                  <Button
+                    onClick={() => setIsPaused(!isPaused)}
+                    className="h-[48px] w-[48px] p-0 bg-transparent border-2 border-yellow-500 hover:bg-yellow-500/10 text-yellow-400 font-bold transition-all flex items-center justify-center"
+                    title={isPaused ? "Resume" : "Pause"}
+                  >
+                    {isPaused ? (
+                      <Play className="w-5 h-5" />
+                    ) : (
+                      <Pause className="w-5 h-5" />
+                    )}
+                  </Button>
                 )}
-              </Button>
+
+                <Button
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || isGenerating}
+                  className="h-[48px] w-[48px] p-0 bg-transparent border-2 border-cyan-500 hover:bg-cyan-500/10 text-cyan-400 font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {isGenerating ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Send className="w-5 h-5" />
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </main>
