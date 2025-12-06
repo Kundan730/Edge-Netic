@@ -46,7 +46,21 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    initializeEngine();
+    // Check if engine is already initialized in this session
+    const isEngineReady = sessionStorage.getItem('edge-netic-engine-ready');
+    if (isEngineReady === 'true') {
+      // Engine was initialized before, but check if reference still exists
+      if (!engineRef.current) {
+        // Reference lost (page refresh), need to re-initialize
+        sessionStorage.removeItem('edge-netic-engine-ready');
+        initializeEngine();
+      } else {
+        setIsInitializing(false);
+        setDownloadStatus('Ready');
+      }
+    } else {
+      initializeEngine();
+    }
     loadConversationsFromStorage();
   }, []);
 
@@ -131,6 +145,9 @@ export default function ChatPage() {
         saveStats(updated);
         return updated;
       });
+
+      // Mark engine as ready in session storage
+      sessionStorage.setItem('edge-netic-engine-ready', 'true');
 
       setIsInitializing(false);
       setDownloadStatus('Ready');
