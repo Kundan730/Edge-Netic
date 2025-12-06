@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 180 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 280 65% 60%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 280 65% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 180 100% 50%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-black text-white;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent;
+  }
+
+  .glass {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10;
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  }
+
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+/* Markdown Prose Styling */
+.prose {
+  @apply max-w-none;
+}
+
+.prose p {
+  @apply my-2 leading-relaxed;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  @apply font-bold mt-4 mb-2;
+}
+
+.prose h1 { @apply text-2xl; }
+.prose h2 { @apply text-xl; }
+.prose h3 { @apply text-lg; }
+
+.prose ul, .prose ol {
+  @apply my-2 ml-4;
+}
+
+.prose li {
+  @apply my-1;
+}
+
+.prose code {
+  @apply bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono text-cyan-300;
+}
+
+.prose pre {
+  @apply my-3 rounded-lg overflow-x-auto;
+}
+
+.prose pre code {
+  @apply bg-transparent p-0 text-sm;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-cyan-500 pl-4 italic text-gray-300 my-3;
+}
+
+.prose a {
+  @apply text-cyan-400 hover:text-cyan-300 underline;
+}
+
+.prose strong {
+  @apply font-bold text-white;
+}
+
+.prose em {
+  @apply italic;
+}
+
+.prose table {
+  @apply w-full my-3 border-collapse;
+}
+
+.prose th, .prose td {
+  @apply border border-white/20 px-3 py-2;
+}
+
+.prose th {
+  @apply bg-white/5 font-semibold;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.font-mono {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
