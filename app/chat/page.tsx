@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, Trash2, Lock, Loader2, Download, ArrowLeft, Bot, Menu, BarChart3, Shield, Pause, Play } from 'lucide-react';
+import { Send, Trash2, Lock, Loader2, Download, ArrowLeft, Bot, Menu, BarChart3, Shield, Pause, Play, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,6 +23,8 @@ import { ExportMenu } from '@/components/ExportMenu';
 import { PersonaSelector } from '@/components/PersonaSelector';
 import { VoiceInputButton } from '@/components/VoiceInputButton';
 import { AnalyticsModal } from '@/components/AnalyticsModal';
+import { AdvancedSettings } from '@/components/AdvancedSettings';
+import { AISettings, loadSettings } from '@/lib/settingsStorage';
 
 export default function ChatPage() {
   const router = useRouter();
@@ -39,7 +41,9 @@ export default function ChatPage() {
   const [selectedPersona, setSelectedPersona] = useState<PersonaType>('standard');
   const [stats, setStats] = useState<Stats>(loadStats());
   const [showAnalytics, setShowAnalytics] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Start closed on mobile
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [aiSettings, setAiSettings] = useState<AISettings>(loadSettings());
   const modelLoadStartTimeRef = useRef<number>(0);
   const maxProgressRef = useRef<number>(0);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -262,11 +266,12 @@ export default function ChatPage() {
         content: msg.content,
       }));
 
-      // Streaming response
+      // Streaming response with AI settings
       const completion = await engineRef.current.chat.completions.create({
         messages: chatMessages,
-        temperature: 0.7,
-        max_tokens: 512,
+        temperature: aiSettings.temperature,
+        max_tokens: aiSettings.maxTokens,
+        top_p: aiSettings.topP,
         stream: true,
       });
 
@@ -449,8 +454,8 @@ export default function ChatPage() {
 
   return (
     <div className="h-screen flex overflow-hidden bg-black">
-      {/* Sidebar - Hidden on mobile by default, always visible on desktop */}
-      <div className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:static z-50 md:z-0 transition-transform duration-300 ease-in-out h-full w-64`}>
+      {/* Sidebar - Toggleable on all screen sizes */}
+      <div className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed md:static z-50 md:z-0 transition-transform duration-300 ease-in-out h-full w-64`}>
         <ConversationSidebar
           conversations={conversations}
           activeConvId={activeConvId}
@@ -458,7 +463,6 @@ export default function ChatPage() {
             setActiveConvId(id);
             const conv = conversations.find(c => c.id === id);
             if (conv) setSelectedPersona(conv.persona);
-            setIsSidebarOpen(false); // Close on mobile after selection
           }}
           onNewConversation={createNewConversation}
           onDeleteConversation={deleteConversation}
@@ -467,13 +471,14 @@ export default function ChatPage() {
         />
       </div>
 
-      {/* Overlay for mobile sidebar */}
+      {/* Overlay for mobile only */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
+
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
@@ -506,6 +511,15 @@ export default function ChatPage() {
                   <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-400 rounded-full animate-pulse" />
                   <span className="text-[10px] md:text-xs font-semibold text-green-400 hidden sm:inline">SECURE</span>
                 </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSettings(true)}
+                  className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 text-xs px-2 py-1"
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
 
                 <Button
                   variant="outline"
@@ -656,6 +670,17 @@ export default function ChatPage() {
           </div>
         </main>
       </div>
+
+
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <AdvancedSettings
+          settings={aiSettings}
+          onSettingsChange={setAiSettings}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
 
       {/* Analytics Modal */}
       <AnalyticsModal

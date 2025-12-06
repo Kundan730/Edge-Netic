@@ -1,5 +1,7 @@
-import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
+
+// Lazy load PDF.js only on client-side
+// Removed old PDF.js loading block
 
 export interface DocumentChunk {
     id: string;
@@ -17,26 +19,34 @@ export interface UploadedDocument {
     chunks: DocumentChunk[];
 }
 
-// Configure PDF.js worker
-if (typeof window !== 'undefined') {
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-        '//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-}
-
 export const processDocument = async (file: File): Promise<UploadedDocument> => {
     let text = '';
 
-    if (file.type === 'text/plain' || file.name.endsWith('.md')) {
+    if (file.type === 'text/plain' || file.name.endsWith('.md') || file.name.endsWith('.txt')) {
         text = await file.text();
     } else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-        text = await extractPDFText(file);
-    } else if (file.name.endsWith('.docx')) {
-        const result = await mammoth.extractRawText({
-            arrayBuffer: await file.arrayBuffer()
-        });
-        text = result.value;
+        try {
+            text = await extractPDFText(file);
+        } catch (error) {
+            console.error('PDF extraction failed:', error);
+            throw new Error('Failed to process PDF. Please try a different file format.');
+        }
+    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.endsWith('.docx')) {
+        try {
+            const result = await mammoth.extractRawText({
+                arrayBuffer: await file.arrayBuffer()
+            });
+            text = result.value;
+        } catch (error) {
+            console.error('DOCX extraction failed:', error);
+            throw new Error('Failed to process DOCX. Please try a different file format.');
+        }
     } else {
-        throw new Error(`Unsupported file type: ${file.type}`);
+        throw new Error(`Unsupported file type: ${file.type || file.name}. Please upload PDF, DOCX, TXT, or MD files.`);
+    }
+
+    if (!text || text.trim().length === 0) {
+        throw new Error('No text content found in the document.');
     }
 
     const chunks = chunkText(text, file.name);
@@ -52,18 +62,47 @@ export const processDocument = async (file: File): Promise<UploadedDocument> => 
 };
 
 const extractPDFText = async (file: File): Promise<string> => {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    let fullText = '';
+    try {
+        // Load PDF.js from CDN if not already loaded
+        if (typeof window !== 'undefined' && !(window as any).pdfjsLib) {
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
 
-    for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items.map((item: any) => item.str).join(' ');
-        fullText += pageText + '\n\n';
+        const pdfjsLib = (window as any).pdfjsLib;
+        if (!pdfjsLib) {
+            throw new Error('PDF.js failed to load');
+        }
+
+        // Set worker path
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const arrayBuffer = await file.arrayBuffer();
+        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+        const pdf = await loadingTask.promise;
+        let fullText = '';
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map((item: any) => item.str).join(' ');
+            fullText += pageText + '\n\n';
+        }
+
+        if (!fullText.trim()) {
+            throw new Error('No text content found in PDF. The PDF might be image-based or empty.');
+        }
+
+        return fullText;
+    } catch (error) {
+        console.error('PDF extraction error:', error);
+        throw new Error(`PDF processing failed: ${error instanceof Error ? error.message : 'Unknown error'}. Try converting to TXT format.`);
     }
-
-    return fullText;
 };
 
 const chunkText = (text: string, source: string): DocumentChunk[] => {
