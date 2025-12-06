@@ -10,7 +10,7 @@ Built in **DEEP Open Innovation Hackathon 2025** 🚀
 
 ## 🔗 Links
 
-- **Live Demo**: [Coming Soon]
+- **Live Demo**: https://edge-netic.vercel.app/]
 
 ---
 
