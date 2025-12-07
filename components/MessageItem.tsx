@@ -4,10 +4,7 @@ import { Message } from '@/types/chat';
 import { Bot, User, Copy, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 
 interface MessageItemProps {
     message: Message;
@@ -44,33 +41,7 @@ export function MessageItem({ message, onRegenerate, isStreaming }: MessageItemP
                     {isUser ? (
                         <p className="whitespace-pre-wrap break-words">{message.content}</p>
                     ) : (
-                        <div className="prose prose-invert prose-sm max-w-none">
-                            <ReactMarkdown
-                                remarkPlugins={[remarkGfm]}
-                                components={{
-                                    code({ node, className, children, ...props }: any) {
-                                        const match = /language-(\w+)/.exec(className || '');
-                                        const inline = !match;
-                                        return !inline && match ? (
-                                            <SyntaxHighlighter
-                                                style={vscDarkPlus}
-                                                language={match[1]}
-                                                PreTag="div"
-                                                {...props}
-                                            >
-                                                {String(children).replace(/\n$/, '')}
-                                            </SyntaxHighlighter>
-                                        ) : (
-                                            <code className={className} {...props}>
-                                                {children}
-                                            </code>
-                                        );
-                                    },
-                                }}
-                            >
-                                {message.content}
-                            </ReactMarkdown>
-                        </div>
+                        <MarkdownRenderer content={message.content} theme="dark" />
                     )}
                 </div>
 

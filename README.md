@@ -35,12 +35,18 @@ Built in **DEEP Open Innovation Hackathon 2025** 🚀
 - No internet required for AI conversations
 
 ### 🎨 **Rich User Experience**
+- **7 AI Models**: Llama 3.2 (1B & 3B), Qwen 2.5, Gemma 2, Phi 3.5, Mistral 7B, Qwen Coder
 - **5 AI Personas**: Standard, Professional, Friendly, Creative, Technical
-- **Multiple Conversations**: Manage separate chat threads
+- **Multiple Conversations**: Manage separate chat threads with auto-titling
 - **Export Options**: Save conversations as TXT, JSON, or Markdown
-- **Voice Input**: Speak your messages using Web Speech API
+- **Voice Input & Assistant**: Speak messages + hands-free voice-only mode
+- **File Attachments**: Upload and analyze PDF, DOCX, TXT files
 - **Markdown Support**: Rich text formatting with syntax highlighting
+- **Code Highlighting**: Copy code blocks with one click
 - **Analytics Dashboard**: Track usage statistics locally
+- **Theme Customization**: Dark/Light mode toggle
+- **Offline Indicator**: Real-time connection status
+- **Advanced AI Settings**: Customize temperature, tokens, top_p
 - **Stage Indicators**: Clear progress during model initialization
 
 ### 🛠️ **Developer-Friendly**
@@ -102,13 +108,16 @@ The optimized static site will be generated in the `out` directory and served on
 | Category | Technology |
 |----------|-----------|
 | **Framework** | Next.js 13.5 (App Router) |
-| **AI Engine** | @mlc-ai/web-llm (Llama-3.2-1B-Instruct) |
-| **Styling** | Tailwind CSS 3.3 |
-| **UI Components** | shadcn/ui with custom theming |
+| **AI Engine** | @mlc-ai/web-llm 0.2.80 |
+| **AI Models** | Llama 3.2 (1B & 3B), Qwen 2.5, Gemma 2, Phi 3.5, Mistral 7B, Qwen Coder |
+| **Styling** | Tailwind CSS 3.3 + next-themes |
+| **UI Components** | shadcn/ui with Radix UI primitives |
 | **PWA** | next-pwa 5.6 |
 | **Language** | TypeScript 5.2 |
-| **Markdown** | react-markdown with syntax highlighting |
-| **State Management** | React Hooks + localStorage |
+| **Markdown** | react-markdown + rehype-highlight + remark-gfm |
+| **File Processing** | pdfjs-dist, mammoth (DOCX) |
+| **Voice** | Web Speech API (Recognition & Synthesis) |
+| **State Management** | React Hooks + localStorage + IndexedDB |
 
 ---
 
@@ -150,18 +159,87 @@ Export your conversations in multiple formats:
 - **JSON**: Structured data for backup
 - **Markdown**: Formatted with metadata
 
-### 🎤 Voice Input
+### 🎤 Voice Input & Voice Assistant
 
-Use the Web Speech API to dictate messages:
-- Click the microphone button
+**Voice Input for Messages:**
+- Click the microphone button in the input area
 - Speak your message
 - Automatic transcription to text
+- Multi-language support
+
+**Voice Assistant Mode (NEW!):**
+- Floating voice assistant button for hands-free interaction
+- Ask questions using voice only
+- Get spoken AI responses
+- Futuristic pulsing animation during listening
+- Perfect for multitasking and accessibility
+- Works with all AI personas
+
+### 📎 File Attachments
+
+Upload and analyze documents directly:
+- **Supported Formats**: PDF, DOCX, TXT
+- **Smart Extraction**: Automatic text extraction from documents
+- **Context-Aware**: AI analyzes file content with your questions
+- **File Preview**: See attached file before sending
+- **Easy Management**: Clear attachments with one click
+
+### 🎨 Theme Customization
+
+- **Dark Mode**: Default sleek dark theme
+- **Light Mode**: Clean, professional light theme
+- **System Sync**: Match your OS theme preference
+- **Persistent**: Theme choice saved across sessions
+- **Smooth Transitions**: Elegant theme switching animations
+
+### 🤖 Multiple AI Models
+
+Switch between **7 different AI models** optimized for various tasks:
+
+| Model | Size | Context | Speed | Best For |
+|-------|------|---------|-------|----------|
+| **Llama 3.2 1B** | 815 MB | 2K | ⚡⚡⚡ | Quick responses, general chat (Default) |
+| **Qwen 2.5 1.5B** | 1.6 GB | 4K | ⚡⚡⚡ | Multilingual, fast responses |
+| **Gemma 2 2B** | 1.4 GB | 8K | ⚡⚡ | Longer context, Google's model |
+| **Llama 3.2 3B** | 2.0 GB | **128K** | ⚡⚡ | **Massive context**, document analysis |
+| **Qwen Coder 3B** | 2.5 GB | 4K | ⚡⚡ | Programming, code generation |
+| **Phi 3.5 Mini 4B** | 2.5 GB | 4K | ⚡ | Balanced capability, Microsoft |
+| **Mistral 7B** | 4.5 GB | 4K | ⚡ | Most powerful, complex reasoning |
+
+**🌟 Highlight: Llama 3.2 3B** features an incredible **128K token context window** - perfect for analyzing entire documents, long conversations, and complex multi-turn interactions!
+
+**Model Switching:**
+- Select from dropdown in header
+- Automatic re-initialization with progress tracking
+- Models cached separately in IndexedDB
+- Size and capability info displayed
+- Instant switching between cached models
 
 ### 🔄 Message Actions
 
 - **Copy**: Copy any message to clipboard
+- **Copy Code**: One-click copy for code blocks
 - **Regenerate**: Re-generate AI responses
 - **Timestamps**: View exact message times
+- **Markdown Rendering**: Beautiful formatting with GitHub-style markdown
+- **Syntax Highlighting**: Code blocks with language detection
+
+### 🌐 Offline Support
+
+- **Offline Indicator**: Real-time connection status display
+- **Full Offline Functionality**: Chat works without internet after setup
+- **PWA Installation**: Install as standalone app
+- **Service Worker**: Aggressive caching for instant loads
+- **No Degradation**: Same experience online or offline
+
+### ⚙️ Advanced Settings
+
+Fine-tune AI behavior:
+- **Temperature** (0.0 - 2.0): Control randomness/creativity
+- **Max Tokens** (50 - 2048): Limit response length
+- **Top P** (0.0 - 1.0): Nucleus sampling parameter
+- **Real-time Updates**: Changes apply immediately
+- **Persistent Settings**: Saved across sessions
 
 ---
 
@@ -256,14 +334,21 @@ Beautiful initialization screen with:
 
 | Metric | Value |
 |--------|-------|
-| Model Download | ~800MB (one-time) |
-| First Load Time | 5-15 seconds |
-| Cached Load Time | 2-5 seconds |
-| First Message | 2-5 seconds |
-| Subsequent Messages | 1-3 seconds |
-| Memory Usage | 1.5-2GB RAM |
+| Model Download | 815MB - 4.5GB (one-time, varies by model) |
+| First Load Time | 5-20 seconds (depends on model size) |
+| Cached Load Time | 2-8 seconds (depends on model size) |
+| First Message | 1-5 seconds (smaller models faster) |
+| Subsequent Messages | 1-4 seconds (varies by model) |
+| Memory Usage | 1.5-4GB RAM (depends on model) |
+| Context Window | 2K - **128K tokens** (Llama 3.2 3B) |
 
-*Performance varies based on hardware and GPU capabilities*
+**Model Performance Comparison:**
+- **Fastest**: Llama 3.2 1B, Qwen 2.5 1.5B (~1-2s responses)
+- **Balanced**: Gemma 2 2B, Llama 3.2 3B (~2-3s responses)
+- **Most Capable**: Mistral 7B (~3-5s responses)
+- **Best for Code**: Qwen Coder 3B (~2-3s responses)
+
+*Performance varies based on hardware, GPU capabilities, and prompt complexity*
 
 ---
 
@@ -336,22 +421,40 @@ edge-netic/
 ├── app/
 │   ├── chat/
 │   │   └── page.tsx          # Main chat interface
-│   ├── globals.css           # Global styles
-│   ├── layout.tsx            # Root layout
+│   ├── globals.css           # Global styles + animations
+│   ├── layout.tsx            # Root layout with theme provider
 │   └── page.tsx              # Landing page
 ├── components/
-│   ├── ui/                   # shadcn/ui components
-│   ├── AnalyticsModal.tsx    # Analytics dashboard
-│   ├── ConversationSidebar.tsx
-│   ├── ExportMenu.tsx
+│   ├── ui/                   # shadcn/ui components (47 components)
+│   ├── AdvancedSettings.tsx  # AI parameter controls
+│   ├── AnalyticsModal.tsx    # Usage statistics dashboard
+│   ├── CodeBlock.tsx         # Syntax highlighted code
+│   ├── ConversationSidebar.tsx # Chat thread navigation
+│   ├── ExportMenu.tsx        # Export conversations
+│   ├── FileAttachment.tsx    # Document upload handler
+│   ├── MarkdownRenderer.tsx  # Rich text rendering
 │   ├── MessageItem.tsx       # Chat message component
-│   ├── PersonaSelector.tsx
-│   └── VoiceInputButton.tsx
+│   ├── ModelSelector.tsx     # AI model switcher
+│   ├── OfflineIndicator.tsx  # Connection status
+│   ├── PersonaSelector.tsx   # AI personality picker
+│   ├── ThemeToggle.tsx       # Dark/Light mode switch
+│   ├── VoiceAssistant.tsx    # Hands-free voice mode
+│   └── VoiceInputButton.tsx  # Voice input for messages
+├── contexts/
+│   └── ThemeContext.tsx      # Theme management
+├── hooks/
+│   ├── use-mobile.tsx        # Responsive utilities
+│   ├── use-toast.ts          # Toast notifications
+│   └── use-theme.ts          # Theme hook
 ├── lib/
+│   ├── modelConfig.ts        # AI model configurations
 │   ├── personaPrompts.ts     # AI persona definitions
-│   └── storageUtils.ts       # localStorage utilities
+│   ├── settingsStorage.ts    # Settings persistence
+│   ├── storageUtils.ts       # localStorage utilities
+│   └── utils.ts              # Helper functions
 ├── types/
-│   └── chat.ts               # TypeScript interfaces
+│   ├── chat.ts               # Chat interfaces
+│   └── settings.ts           # Settings types
 ├── public/
 │   ├── manifest.json         # PWA manifest
 │   └── sw.js                 # Service worker

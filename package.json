@@ -70,6 +70,7 @@
     "react-syntax-highlighter": "^16.1.0",
     "recharts": "^2.12.7",
     "rehype-highlight": "^7.0.2",
+    "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.5.2",

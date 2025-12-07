@@ -25,6 +25,8 @@ import { VoiceInputButton } from '@/components/VoiceInputButton';
 import { FileAttachment } from '@/components/FileAttachment';
 import { AnalyticsModal } from '@/components/AnalyticsModal';
 import { AdvancedSettings } from '@/components/AdvancedSettings';
+import { OfflineIndicator } from '@/components/OfflineIndicator';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { ModelSelector } from '@/components/ModelSelector';
 import { VoiceAssistant } from '@/components/VoiceAssistant';
 import { AISettings, loadSettings } from '@/lib/settingsStorage';
