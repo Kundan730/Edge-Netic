@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, Trash2, Lock, Loader2, Download, ArrowLeft, Bot, Menu, BarChart3, Shield, Pause, Play, Settings } from 'lucide-react';
+import { Send, Trash2, Lock, Loader2, Download, ArrowLeft, Bot, Menu, BarChart3, Shield, Pause, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,7 +24,9 @@ import { PersonaSelector } from '@/components/PersonaSelector';
 import { VoiceInputButton } from '@/components/VoiceInputButton';
 import { AnalyticsModal } from '@/components/AnalyticsModal';
 import { AdvancedSettings } from '@/components/AdvancedSettings';
+import { ModelSelector } from '@/components/ModelSelector';
 import { AISettings, loadSettings } from '@/lib/settingsStorage';
+import { loadSelectedModel, getModelById } from '@/lib/modelConfig';
 
 export default function ChatPage() {
   const router = useRouter();
@@ -44,6 +46,7 @@ export default function ChatPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [aiSettings, setAiSettings] = useState<AISettings>(loadSettings());
+  const [selectedModelId, setSelectedModelId] = useState<string>(loadSelectedModel());
   const modelLoadStartTimeRef = useRef<number>(0);
   const maxProgressRef = useRef<number>(0);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -97,27 +100,55 @@ export default function ChatPage() {
   const initializeEngine = async () => {
     try {
       setIsInitializing(true);
-      setDownloadStatus('Initializing AI Brain...');
+      const selectedModel = getModelById(selectedModelId);
+      const modelName = selectedModel?.displayName || 'AI Model';
+      setDownloadStatus(`Initializing ${modelName}...`);
       modelLoadStartTimeRef.current = Date.now();
 
       const webllm = await import('@mlc-ai/web-llm');
 
-      // Configure custom model URL to use Hugging Face CDN directly
-      // This fixes CDN access issues on Vercel
+      // Configure custom model URLs for all supported models
       const appConfig = {
         model_list: [
           {
             model_id: 'Llama-3.2-1B-Instruct-q4f16_1-MLC',
             model: 'https://huggingface.co/mlc-ai/Llama-3.2-1B-Instruct-q4f16_1-MLC/resolve/main/',
             model_lib: 'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/Llama-3.2-1B-Instruct-q4f16_1-ctx4k_cs1k-webgpu.wasm',
+          },
+          {
+            model_id: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC',
+            model: 'https://huggingface.co/mlc-ai/Qwen2.5-1.5B-Instruct-q4f16_1-MLC/resolve/main/',
+            model_lib: 'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/Qwen2-1.5B-Instruct-q4f16_1-ctx4k_cs1k-webgpu.wasm',
+          },
+          {
+            model_id: 'gemma-2-2b-it-q4f16_1-MLC',
+            model: 'https://huggingface.co/mlc-ai/gemma-2-2b-it-q4f16_1-MLC/resolve/main/',
+            model_lib: 'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/gemma-2-2b-it-q4f16_1-ctx4k_cs1k-webgpu.wasm',
+          },
+          {
+            model_id: 'Qwen2.5-Coder-3B-Instruct-q4f16_1-MLC',
+            model: 'https://huggingface.co/mlc-ai/Qwen2.5-Coder-3B-Instruct-q4f16_1-MLC/resolve/main/',
+            model_lib: 'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/Qwen2.5-3B-Instruct-q4f16_1-ctx4k_cs1k-webgpu.wasm',
+          },
+          {
+            model_id: 'Phi-3.5-mini-instruct-q4f16_1-MLC',
+            model: 'https://huggingface.co/mlc-ai/Phi-3.5-mini-instruct-q4f16_1-MLC/resolve/main/',
+            model_lib: 'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/Phi-3.5-mini-instruct-q4f16_1-ctx4k_cs1k-webgpu.wasm',
+          },
+          {
+            model_id: 'Mistral-7B-Instruct-v0.3-q4f16_1-MLC',
+            model: 'https://huggingface.co/mlc-ai/Mistral-7B-Instruct-v0.3-q4f16_1-MLC/resolve/main/',
+            model_lib: 'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/Mistral-7B-Instruct-v0.3-q4f16_1-ctx4k_cs1k-webgpu.wasm',
           }
         ]
       };
 
+      const modelToLoad = selectedModel?.name || 'Llama-3.2-1B-Instruct-q4f16_1-MLC';
+
       const engine = await webllm.CreateMLCEngine(
-        'Llama-3.2-1B-Instruct-q4f16_1-MLC',
+        modelToLoad,
         {
-          appConfig,  // Use custom CDN configuration
+          appConfig,
           initProgressCallback: (progress) => {
             // Calculate progress percentage
             const percent = Math.round(progress.progress * 100);
@@ -167,14 +198,26 @@ export default function ChatPage() {
 
       // Mark engine as ready in session storage
       sessionStorage.setItem('edge-netic-engine-ready', 'true');
+      sessionStorage.setItem('edge-netic-loaded-model', selectedModelId);
 
       setIsInitializing(false);
       setDownloadStatus('Ready');
+      toast.success(`${modelName} loaded successfully!`);
     } catch (error) {
       console.error('Failed to initialize engine:', error);
       setDownloadStatus('Initialization failed. Please refresh the page.');
       setIsInitializing(false);
+      toast.error('Failed to load AI model');
     }
+  };
+
+  const handleModelChange = (newModelId: string) => {
+    // Clear engine ready flag to force re-initialization
+    sessionStorage.removeItem('edge-netic-engine-ready');
+    sessionStorage.removeItem('edge-netic-loaded-model');
+
+    // Reload page to reinitialize with new model
+    window.location.reload();
   };
 
   const createNewConversation = () => {
@@ -250,6 +293,11 @@ export default function ChatPage() {
     updateConversation({ messages: updatedMessages, title });
     setInput('');
     setIsGenerating(true);
+    setIsPaused(false);
+
+    // Create new AbortController for this generation
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
     const startTime = Date.now();
 
@@ -287,8 +335,9 @@ export default function ChatPage() {
 
       // Stream chunks
       for await (const chunk of completion) {
-        // Check if paused
-        if (isPaused) {
+        // Check if generation was aborted
+        if (abortController.signal.aborted) {
+          toast.info('Response generation stopped');
           break;
         }
 
@@ -311,26 +360,29 @@ export default function ChatPage() {
         );
       }
 
-      const responseTime = Date.now() - startTime;
-      const estimatedTokens = Math.ceil((content.length + fullResponse.length) / 4);
+      // Only update stats if not aborted
+      if (!abortController.signal.aborted) {
+        const responseTime = Date.now() - startTime;
+        const estimatedTokens = Math.ceil((content.length + fullResponse.length) / 4);
 
-      // Update stats
-      setStats(prev => {
-        const newTotalMessages = prev.totalMessages + 2;
-        const newAvgResponseTime =
-          (prev.avgResponseTime * prev.totalMessages + responseTime) / newTotalMessages;
+        // Update stats
+        setStats(prev => {
+          const newTotalMessages = prev.totalMessages + 2;
+          const newAvgResponseTime =
+            (prev.avgResponseTime * prev.totalMessages + responseTime) / newTotalMessages;
 
-        const updated = {
-          ...prev,
-          totalMessages: newTotalMessages,
-          avgResponseTime: Math.round(newAvgResponseTime),
-          totalTokens: prev.totalTokens + estimatedTokens,
-          lastUpdated: Date.now(),
-        };
+          const updated = {
+            ...prev,
+            totalMessages: newTotalMessages,
+            avgResponseTime: Math.round(newAvgResponseTime),
+            totalTokens: prev.totalTokens + estimatedTokens,
+            lastUpdated: Date.now(),
+          };
 
-        saveStats(updated);
-        return updated;
-      });
+          saveStats(updated);
+          return updated;
+        });
+      }
 
     } catch (error) {
       console.error('Failed to generate response:', error);
@@ -344,6 +396,8 @@ export default function ChatPage() {
       toast.error('Failed to generate response');
     } finally {
       setIsGenerating(false);
+      setIsPaused(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -521,6 +575,11 @@ export default function ChatPage() {
                   <Settings className="w-4 h-4" />
                 </Button>
 
+                <ModelSelector
+                  currentModelId={selectedModelId}
+                  onModelChange={handleModelChange}
+                />
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -624,51 +683,52 @@ export default function ChatPage() {
               </>
             )}
           </div>
+        </main>
 
-          {/* Input Area - Fixed Height */}
-          <div className="border-t border-cyan-500/20 bg-black/80 backdrop-blur-lg flex-shrink-0">
-            <div className="max-w-4xl mx-auto px-4 py-3">
-              <div className="flex gap-2 items-center">
-                <VoiceInputButton onTranscript={handleVoiceTranscript} />
+        {/* Input Area - Fixed at Bottom */}
+        <div className="border-t border-cyan-500/20 bg-black/80 backdrop-blur-lg flex-shrink-0">
+          <div className="max-w-4xl mx-auto px-4 py-3">
+            <div className="flex gap-2 items-center">
+              <VoiceInputButton onTranscript={handleVoiceTranscript} />
 
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type your message..."
-                  className="flex-1 h-[48px] resize-none bg-gray-950/50 border-cyan-500/20 text-white text-sm placeholder:text-gray-500 focus:border-cyan-400/50 focus:ring-cyan-400/20 rounded-lg px-3 py-3"
-                  disabled={isGenerating}
-                />
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type your message..."
+                className="flex-1 h-[48px] resize-none bg-gray-950/50 border-cyan-500/20 text-white text-sm placeholder:text-gray-500 focus:border-cyan-400/50 focus:ring-cyan-400/20 rounded-lg px-3 py-3"
+                disabled={isGenerating}
+              />
 
-                {isGenerating && (
-                  <Button
-                    onClick={() => setIsPaused(!isPaused)}
-                    className="h-[48px] w-[48px] p-0 bg-transparent border-2 border-yellow-500 hover:bg-yellow-500/10 text-yellow-400 font-bold transition-all flex items-center justify-center"
-                    title={isPaused ? "Resume" : "Pause"}
-                  >
-                    {isPaused ? (
-                      <Play className="w-5 h-5" />
-                    ) : (
-                      <Pause className="w-5 h-5" />
-                    )}
-                  </Button>
-                )}
-
+              {isGenerating && (
                 <Button
-                  onClick={() => handleSend()}
-                  disabled={!input.trim() || isGenerating}
-                  className="h-[48px] w-[48px] p-0 bg-transparent border-2 border-cyan-500 hover:bg-cyan-500/10 text-cyan-400 font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  onClick={() => {
+                    if (abortControllerRef.current) {
+                      abortControllerRef.current.abort();
+                      setIsPaused(true);
+                    }
+                  }}
+                  className="h-[48px] w-[48px] p-0 bg-transparent border-2 border-red-500 hover:bg-red-500/10 text-red-400 font-bold transition-all flex items-center justify-center"
+                  title="Stop Generation"
                 >
-                  {isGenerating ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Send className="w-5 h-5" />
-                  )}
+                  <Pause className="w-5 h-5" />
                 </Button>
-              </div>
+              )}
+
+              <Button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || isGenerating}
+                className="h-[48px] w-[48px] p-0 bg-transparent border-2 border-cyan-500 hover:bg-cyan-500/10 text-cyan-400 font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {isGenerating ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Send className="w-5 h-5" />
+                )}
+              </Button>
             </div>
           </div>
-        </main>
+        </div>
       </div>
 
 

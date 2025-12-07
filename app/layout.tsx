@@ -39,7 +39,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body className={`${inter.variable} ${spaceMono.variable} ${vt323.variable} font-[family-name:var(--font-vt323)] bg-black text-white antialiased`}>
+      <body className={`${inter.variable} ${spaceMono.variable} ${vt323.variable} font-sans bg-black text-white antialiased`}>
         {children}
         <Toaster />
       </body>

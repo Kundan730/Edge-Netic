@@ -45,7 +45,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
+    <div className="min-h-screen bg-black relative overflow-hidden font-vt323">
       {/* Animated background layers */}
       <div className="absolute inset-0">
         {/* Grid pattern */}
