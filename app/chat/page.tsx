@@ -39,7 +39,6 @@ export default function ChatPage() {
   const [downloadMB, setDownloadMB] = useState({ current: 0, total: 0 });
   const [currentStage, setCurrentStage] = useState('Initializing');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [selectedPersona, setSelectedPersona] = useState<PersonaType>('standard');
   const [stats, setStats] = useState<Stats>(loadStats());
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -49,7 +48,6 @@ export default function ChatPage() {
   const [selectedModelId, setSelectedModelId] = useState<string>(loadSelectedModel());
   const modelLoadStartTimeRef = useRef<number>(0);
   const maxProgressRef = useRef<number>(0);
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   const engineRef = useRef<any | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -195,7 +193,6 @@ export default function ChatPage() {
         saveStats(updated);
         return updated;
       });
-
       // Mark engine as ready in session storage
       sessionStorage.setItem('edge-netic-engine-ready', 'true');
       sessionStorage.setItem('edge-netic-loaded-model', selectedModelId);
@@ -293,11 +290,6 @@ export default function ChatPage() {
     updateConversation({ messages: updatedMessages, title });
     setInput('');
     setIsGenerating(true);
-    setIsPaused(false);
-
-    // Create new AbortController for this generation
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
 
     const startTime = Date.now();
 
@@ -335,12 +327,6 @@ export default function ChatPage() {
 
       // Stream chunks
       for await (const chunk of completion) {
-        // Check if generation was aborted
-        if (abortController.signal.aborted) {
-          toast.info('Response generation stopped');
-          break;
-        }
-
         const delta = chunk.choices[0]?.delta?.content || '';
         fullResponse += delta;
 
@@ -360,29 +346,26 @@ export default function ChatPage() {
         );
       }
 
-      // Only update stats if not aborted
-      if (!abortController.signal.aborted) {
-        const responseTime = Date.now() - startTime;
-        const estimatedTokens = Math.ceil((content.length + fullResponse.length) / 4);
+      const responseTime = Date.now() - startTime;
+      const estimatedTokens = Math.ceil((content.length + fullResponse.length) / 4);
 
-        // Update stats
-        setStats(prev => {
-          const newTotalMessages = prev.totalMessages + 2;
-          const newAvgResponseTime =
-            (prev.avgResponseTime * prev.totalMessages + responseTime) / newTotalMessages;
+      // Update stats
+      setStats(prev => {
+        const newTotalMessages = prev.totalMessages + 2;
+        const newAvgResponseTime =
+          (prev.avgResponseTime * prev.totalMessages + responseTime) / newTotalMessages;
 
-          const updated = {
-            ...prev,
-            totalMessages: newTotalMessages,
-            avgResponseTime: Math.round(newAvgResponseTime),
-            totalTokens: prev.totalTokens + estimatedTokens,
-            lastUpdated: Date.now(),
-          };
+        const updated = {
+          ...prev,
+          totalMessages: newTotalMessages,
+          avgResponseTime: Math.round(newAvgResponseTime),
+          totalTokens: prev.totalTokens + estimatedTokens,
+          lastUpdated: Date.now(),
+        };
 
-          saveStats(updated);
-          return updated;
-        });
-      }
+        saveStats(updated);
+        return updated;
+      });
 
     } catch (error) {
       console.error('Failed to generate response:', error);
@@ -396,8 +379,6 @@ export default function ChatPage() {
       toast.error('Failed to generate response');
     } finally {
       setIsGenerating(false);
-      setIsPaused(false);
-      abortControllerRef.current = null;
     }
   };
 
@@ -699,21 +680,6 @@ export default function ChatPage() {
                 className="flex-1 h-[48px] resize-none bg-gray-950/50 border-cyan-500/20 text-white text-sm placeholder:text-gray-500 focus:border-cyan-400/50 focus:ring-cyan-400/20 rounded-lg px-3 py-3"
                 disabled={isGenerating}
               />
-
-              {isGenerating && (
-                <Button
-                  onClick={() => {
-                    if (abortControllerRef.current) {
-                      abortControllerRef.current.abort();
-                      setIsPaused(true);
-                    }
-                  }}
-                  className="h-[48px] w-[48px] p-0 bg-transparent border-2 border-red-500 hover:bg-red-500/10 text-red-400 font-bold transition-all flex items-center justify-center"
-                  title="Stop Generation"
-                >
-                  <Pause className="w-5 h-5" />
-                </Button>
-              )}
 
               <Button
                 onClick={() => handleSend()}

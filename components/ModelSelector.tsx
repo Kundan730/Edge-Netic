@@ -48,12 +48,12 @@ export function ModelSelector({ currentModelId, onModelChange }: ModelSelectorPr
                 <>
                     {/* Backdrop */}
                     <div
-                        className="fixed inset-0 z-40"
+                        className="fixed inset-0 z-[9998]"
                         onClick={() => setIsOpen(false)}
                     />
 
                     {/* Dropdown */}
-                    <div className="absolute top-full right-0 mt-2 w-72 bg-gray-900 border border-cyan-500/30 rounded-lg shadow-xl z-50 overflow-hidden">
+                    <div className="fixed top-[60px] right-4 w-72 bg-gray-900 border border-cyan-500/30 rounded-lg shadow-xl z-[9999] overflow-hidden">
                         <div className="p-3 border-b border-cyan-500/20">
                             <h3 className="text-sm font-bold text-cyan-400 flex items-center gap-2">
                                 <Cpu className="w-4 h-4" />

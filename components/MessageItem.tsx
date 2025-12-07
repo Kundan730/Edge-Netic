@@ -30,7 +30,7 @@ export function MessageItem({ message, onRegenerate, isStreaming }: MessageItemP
         <div className={`flex gap-3 group ${isUser ? 'justify-end' : 'justify-start'}`}>
             {!isUser && (
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 flex items-center justify-center">
-                    <Bot className="w-5 h-5 text-white" />
+                    <Bot className="w-5 h-5 text-black" />
                 </div>
             )}
 
