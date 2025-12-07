@@ -22,9 +22,11 @@ import { ConversationSidebar } from '@/components/ConversationSidebar';
 import { ExportMenu } from '@/components/ExportMenu';
 import { PersonaSelector } from '@/components/PersonaSelector';
 import { VoiceInputButton } from '@/components/VoiceInputButton';
+import { FileAttachment } from '@/components/FileAttachment';
 import { AnalyticsModal } from '@/components/AnalyticsModal';
 import { AdvancedSettings } from '@/components/AdvancedSettings';
 import { ModelSelector } from '@/components/ModelSelector';
+import { VoiceAssistant } from '@/components/VoiceAssistant';
 import { AISettings, loadSettings } from '@/lib/settingsStorage';
 import { loadSelectedModel, getModelById } from '@/lib/modelConfig';
 
@@ -46,6 +48,7 @@ export default function ChatPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [aiSettings, setAiSettings] = useState<AISettings>(loadSettings());
   const [selectedModelId, setSelectedModelId] = useState<string>(loadSelectedModel());
+  const [attachedFile, setAttachedFile] = useState<{ file: File; content: string } | null>(null);
   const modelLoadStartTimeRef = useRef<number>(0);
   const maxProgressRef = useRef<number>(0);
 
@@ -277,11 +280,20 @@ export default function ChatPage() {
     const currentConv = getCurrentConversation();
     if (!currentConv) return;
 
+    // Build message content with file if attached
+    let messageText = content;
+    if (attachedFile) {
+      messageText = `[File: ${attachedFile.file.name}]\n\nFile content:\n${attachedFile.content}\n\nUser's question: ${content}`;
+    }
+
     const userMessage: Message = {
       role: 'user',
-      content: content,
+      content: messageText,
       timestamp: Date.now(),
     };
+
+    // Clear attached file after sending
+    setAttachedFile(null);
 
     // Update conversation with user message
     const updatedMessages = [...currentConv.messages, userMessage];
@@ -420,6 +432,35 @@ export default function ChatPage() {
     if (confirm('Clear all messages in this conversation? This cannot be undone.')) {
       updateConversation({ messages: [], title: 'New Conversation' });
       toast.success('Conversation cleared');
+    }
+  };
+
+  const handleVoiceQuery = async (text: string): Promise<string> => {
+    if (!engineRef.current) {
+      throw new Error('AI engine not ready');
+    }
+
+    try {
+      const systemMessage = {
+        role: 'system',
+        content: getPersonaSystemMessage(selectedPersona) + '\n\nIMPORTANT: Keep your response concise and conversational for voice interaction. Aim for 2-3 sentences maximum.',
+      };
+
+      const completion = await engineRef.current.chat.completions.create({
+        messages: [
+          systemMessage,
+          { role: 'user', content: text }
+        ],
+        temperature: 0.3, // Lower temperature for faster, more focused responses
+        max_tokens: 150, // Limit tokens for faster voice responses
+        top_p: 0.9,
+        stream: false,
+      });
+
+      return completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+    } catch (error) {
+      console.error('Voice query error:', error);
+      throw error;
     }
   };
 
@@ -670,6 +711,11 @@ export default function ChatPage() {
         <div className="border-t border-cyan-500/20 bg-black/80 backdrop-blur-lg flex-shrink-0">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex gap-2 items-center">
+              <FileAttachment
+                onFileSelect={(file, content) => setAttachedFile({ file, content })}
+                onClear={() => setAttachedFile(null)}
+                currentFile={attachedFile}
+              />
               <VoiceInputButton onTranscript={handleVoiceTranscript} />
 
               <Textarea
@@ -714,6 +760,9 @@ export default function ChatPage() {
         onOpenChange={setShowAnalytics}
         stats={stats}
       />
+
+      {/* Voice Assistant */}
+      {!isInitializing && <VoiceAssistant onVoiceQuery={handleVoiceQuery} />}
     </div>
   );
 }
