@@ -76,7 +76,6 @@
 @layer base {
   * {
     @apply border-border;
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   }
 
   body {
@@ -90,6 +89,18 @@
 
   .light body {
     @apply bg-white text-gray-900;
+  }
+
+  /* Optimize animations for better performance */
+  @media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
@@ -185,6 +196,24 @@
 
   .animate-slide-in {
     animation: slideInFromBottom 0.5s ease-out;
+  }
+
+  /* Performance optimizations */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  .contain-layout {
+    contain: layout;
+  }
+
+  .contain-paint {
+    contain: paint;
+  }
+
+  .contain-strict {
+    contain: strict;
   }
 }
 

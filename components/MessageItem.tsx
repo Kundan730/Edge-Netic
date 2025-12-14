@@ -5,6 +5,7 @@ import { Bot, User, Copy, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import { memo, useMemo } from 'react';
 
 interface MessageItemProps {
     message: Message;
@@ -12,7 +13,7 @@ interface MessageItemProps {
     isStreaming?: boolean;
 }
 
-export function MessageItem({ message, onRegenerate, isStreaming }: MessageItemProps) {
+function MessageItemComponent({ message, onRegenerate, isStreaming }: MessageItemProps) {
     const copyToClipboard = () => {
         navigator.clipboard.writeText(message.content);
         toast.success('Message copied to clipboard!');
@@ -20,6 +21,11 @@ export function MessageItem({ message, onRegenerate, isStreaming }: MessageItemP
 
     const isUser = message.role === 'user';
     const isSystem = message.role === 'system';
+
+    // Memoize timestamp formatting
+    const formattedTime = useMemo(() => {
+        return new Date(message.timestamp).toLocaleTimeString();
+    }, [message.timestamp]);
 
     if (isSystem) return null;
 
@@ -69,7 +75,7 @@ export function MessageItem({ message, onRegenerate, isStreaming }: MessageItemP
                     )}
 
                     <span className="text-xs text-gray-500 ml-auto">
-                        {new Date(message.timestamp).toLocaleTimeString()}
+                        {formattedTime}
                     </span>
                 </div>
             </div>
@@ -82,3 +88,16 @@ export function MessageItem({ message, onRegenerate, isStreaming }: MessageItemP
         </div>
     );
 }
+
+// Memoize the component to prevent unnecessary re-renders
+export const MessageItem = memo(MessageItemComponent, (prevProps, nextProps) => {
+    // Custom comparison function for better performance
+    return (
+        prevProps.message.content === nextProps.message.content &&
+        prevProps.message.timestamp === nextProps.message.timestamp &&
+        prevProps.isStreaming === nextProps.isStreaming &&
+        prevProps.onRegenerate === nextProps.onRegenerate
+    );
+});
+
+MessageItem.displayName = 'MessageItem';

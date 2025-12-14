@@ -4,16 +4,25 @@ import { Inter, Space_Mono, VT323 } from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+  preload: true,
+});
 const spaceMono = Space_Mono({
   weight: ['400', '700'],
   subsets: ['latin'],
-  variable: '--font-mono'
+  variable: '--font-mono',
+  display: 'swap',
+  preload: true,
 });
 const vt323 = VT323({
   weight: ['400'],
   subsets: ['latin'],
-  variable: '--font-vt323'
+  variable: '--font-vt323',
+  display: 'swap',
+  preload: false, // Only preload fonts that are used immediately
 });
 
 export const metadata: Metadata = {

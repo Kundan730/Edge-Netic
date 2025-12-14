@@ -5,6 +5,7 @@ const STATS_KEY = 'edge-netic-stats';
 const OLD_MESSAGES_KEY = 'edge-netic-messages';
 
 export const saveConversations = (conversations: Conversation[]): void => {
+    if (typeof window === 'undefined') return;
     try {
         localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations));
     } catch (error) {
@@ -13,6 +14,7 @@ export const saveConversations = (conversations: Conversation[]): void => {
 };
 
 export const loadConversations = (): Conversation[] => {
+    if (typeof window === 'undefined') return [];
     try {
         const saved = localStorage.getItem(CONVERSATIONS_KEY);
         if (saved) {
@@ -61,6 +63,7 @@ export const migrateOldMessages = (): Conversation[] => {
 };
 
 export const saveStats = (stats: Stats): void => {
+    if (typeof window === 'undefined') return;
     try {
         console.log('[saveStats] Saving modelLoadTime:', stats.modelLoadTime);
         localStorage.setItem(STATS_KEY, JSON.stringify(stats));
@@ -70,6 +73,17 @@ export const saveStats = (stats: Stats): void => {
 };
 
 export const loadStats = (): Stats => {
+    if (typeof window === 'undefined') {
+        return {
+            totalMessages: 0,
+            totalConversations: 0,
+            avgResponseTime: 0,
+            modelLoadTime: 0,
+            totalTokens: 0,
+            lastUpdated: Date.now()
+        };
+    }
+
     try {
         const saved = localStorage.getItem(STATS_KEY);
         if (saved) {

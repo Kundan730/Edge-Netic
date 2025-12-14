@@ -5,14 +5,16 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { CodeBlock } from './CodeBlock';
 import { Components } from 'react-markdown';
+import { memo, useMemo } from 'react';
 
 interface MarkdownRendererProps {
     content: string;
     theme?: 'dark' | 'light';
 }
 
-export function MarkdownRenderer({ content, theme = 'dark' }: MarkdownRendererProps) {
-    const components: Components = {
+function MarkdownRendererComponent({ content, theme = 'dark' }: MarkdownRendererProps) {
+    // Memoize components configuration to prevent recreation on every render
+    const components: Components = useMemo(() => ({
         code({ node, className, children, ...props }: any) {
             const match = /language-(\w+)/.exec(className || '');
             const language = match ? match[1] : '';
@@ -139,7 +141,7 @@ export function MarkdownRenderer({ content, theme = 'dark' }: MarkdownRendererPr
         hr({ node, ...props }) {
             return <hr className="my-4 border-gray-700" {...props} />;
         },
-    };
+    }), [theme]);
 
     return (
         <div className="markdown-content">
@@ -153,3 +155,7 @@ export function MarkdownRenderer({ content, theme = 'dark' }: MarkdownRendererPr
         </div>
     );
 }
+
+// Memoize the component to prevent unnecessary re-renders
+export const MarkdownRenderer = memo(MarkdownRendererComponent);
+MarkdownRenderer.displayName = 'MarkdownRenderer';

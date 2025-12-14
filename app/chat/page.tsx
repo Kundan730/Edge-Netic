@@ -85,7 +85,10 @@ export default function ChatPage() {
   }, [conversations]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Use requestAnimationFrame for smoother scrolling
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    });
   };
 
   const loadConversationsFromStorage = () => {
@@ -632,7 +635,7 @@ export default function ChatPage() {
         </header>
 
         {/* Messages Area */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto" ref={messagesEndRef}>
           <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
             {!currentConv || currentConv.messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
@@ -677,7 +680,7 @@ export default function ChatPage() {
               <>
                 {currentConv.messages.map((message, index) => (
                   <MessageItem
-                    key={index}
+                    key={`${message.timestamp}-${index}`}
                     message={message}
                     onRegenerate={
                       index === currentConv.messages.length - 1 && message.role === 'assistant'
@@ -702,8 +705,6 @@ export default function ChatPage() {
                     </div>
                   </div>
                 )}
-
-                <div ref={messagesEndRef} />
               </>
             )}
           </div>
