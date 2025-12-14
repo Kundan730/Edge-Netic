@@ -61,7 +61,7 @@ export function WebGPUCompatibilityChecker() {
         let gpuInfo = undefined;
         const recommendations: string[] = [];
 
-        if ('gpu' in navigator) {
+        if ('gpu' in navigator && navigator.gpu) {
             try {
                 const adapter = await navigator.gpu.requestAdapter();
                 if (adapter) {
